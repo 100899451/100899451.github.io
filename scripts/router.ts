@@ -1,109 +1,102 @@
-"use strict";
+import { LoginPage } from './login';
+import { RegisterPage } from './register';
+import { EventPlanningPage } from './event-planning';
+import { StatisticsPage } from './statistics'; // Import StatisticsPage
 
-namespace core{
+enum Router {
+    LOGIN = 'login',
+    REGISTER = 'register',
+    EVENT_PLANNING = 'event-planning',
+    STATISTICS = 'statistics', // Add statistics route
+    // Add more routes as needed
+}
 
-    export class Router {
+// Function to fetch content via AJAX
+export function loadContent(url: string): void {
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('content').innerHTML = html;
+        })
+        .catch(error => console.error('Error fetching content:', error));
+}
 
-        private _activeLink:string;
-        private _routingTable:string[];
+// Function to handle navigation
+export function navigate(event: Event): void {
+    event.preventDefault();
+    const url = (event.target as HTMLAnchorElement).getAttribute('href');
+    loadContent(url);
+    history.pushState({}, '', url);
+}
 
-        private _linkData:string;
+export class RouteHandler {
+    private currentPage: any;
 
-        constructor() {
-            this._activeLink = "";
-            this._routingTable = [];
-            this._linkData = "";
+    constructor() {
+        this.currentPage = null;
+    }
+
+    // Method to navigate to a specific route
+    navigateTo(route: Router): void {
+        switch (route) {
+            case Router.LOGIN:
+                this.currentPage = new LoginPage();
+                break;
+            case Router.REGISTER:
+                this.currentPage = new RegisterPage();
+                break;
+            case Router.EVENT_PLANNING:
+                this.currentPage = new EventPlanningPage();
+                break;
+            case Router.STATISTICS: // Handle statistics route
+                this.currentPage = new StatisticsPage();
+                break;
+            // Add more cases for additional routes
+            default:
+                console.error('Invalid route:', route);
+                return;
         }
+        this.renderCurrentPage();
+    }
 
-        public get LinkData():string{
-            return this._linkData;
-        }
-
-        public set LinkData(link:string){
-            this._linkData = link;
-        }
-
-        public get ActiveLink():string{
-            return this._activeLink;
-        }
-
-        public set ActiveLink(link:string){
-            this._activeLink = link;
-        }
-
-        /**
-         * This method adds a new route to the routing table
-         * @param route
-         * @returns {void}
-         */
-        public Add(route:string){
-            this._routingTable.push(route);
-        }
-
-        /**
-         * This method replaces the referemce for the routing table with a new one
-         * @param routingTable
-         * @returns {void}
-         */
-        public AddTable(routingTable:string[]){
-            this._routingTable = routingTable;
-        }
-
-        /**
-         * This method finds and returns the index of the route in the Routing table
-         * or -1 if the route does not exist.
-         * @param route
-         * @returns {*}
-         */
-        public Find(route:string):number{
-            return this._routingTable.indexOf(route);
-        }
-
-        /**
-         * This method removes a route from the routing table. It returns true if it
-         * succeeds (delete a route), false otherwise.
-         * @param route
-         * @returns {boolean}
-         */
-        public Remove(route:string):boolean{
-            if(this.Find(route)>-1){
-                this._routingTable.splice(this.Find(route),1);
-                return true
-            }
-            return false;
-        }
-
-        /**
-         * This method returns the routing table contents in a comma delimited separated string.
-         * @returns {string}
-         */
-        public toString():string{
-            return this._routingTable.toString();
+    // Method to render the current page
+    renderCurrentPage(): void {
+        if (this.currentPage) {
+            this.currentPage.render();
+        } else {
+            console.error('Current page not set.');
         }
     }
 
+    // Method to handle routing based on URL hash
+    handleRouting(): void {
+        const hash = window.location.hash.slice(1);
+        switch (hash) {
+            case Router.LOGIN:
+            case Router.REGISTER:
+            case Router.EVENT_PLANNING:
+            case Router.STATISTICS: // Handle statistics route
+                this.navigateTo(hash as Router);
+                break;
+            default:
+                // Default route
+                this.navigateTo(Router.LOGIN);
+                break;
+        }
+    }
+
+    // Method to initialize the router
+    init(): void {
+        window.addEventListener('hashchange', () => {
+            this.handleRouting();
+        });
+        this.handleRouting(); // Handle routing when the page loads
+    }
 }
 
-// instantiate a new router
-let router:core.Router = new core.Router();
+// Instantiate and initialize the router
+const routeHandler = new RouteHandler();
+routeHandler.init();
 
-// Add default routes to our routing table
-router.AddTable([
-    "/",
-    "/home",
-    "/about",
-    "/services",
-    "/products",
-    "/contact",
-    "/contact-list",
-    "/login",
-    "/register",
-    "/edit"
-
-])
-
-let route:string = location.pathname;
-
-router.ActiveLink = (router.Find(route) > -1)
-                    ? ((route) === "/") ? "home" : route.substring(1)
-                    : ("404");
+// Export the routeHandler instance
+export default routeHandler;

@@ -1,64 +1,74 @@
 "use strict";
-var core;
-(function (core) {
-    class Router {
-        _activeLink;
-        _routingTable;
-        _linkData;
-        constructor() {
-            this._activeLink = "";
-            this._routingTable = [];
-            this._linkData = "";
-        }
-        get LinkData() {
-            return this._linkData;
-        }
-        set LinkData(link) {
-            this._linkData = link;
-        }
-        get ActiveLink() {
-            return this._activeLink;
-        }
-        set ActiveLink(link) {
-            this._activeLink = link;
-        }
-        Add(route) {
-            this._routingTable.push(route);
-        }
-        AddTable(routingTable) {
-            this._routingTable = routingTable;
-        }
-        Find(route) {
-            return this._routingTable.indexOf(route);
-        }
-        Remove(route) {
-            if (this.Find(route) > -1) {
-                this._routingTable.splice(this.Find(route), 1);
-                return true;
-            }
-            return false;
-        }
-        toString() {
-            return this._routingTable.toString();
-        }
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Router = void 0;
+var login_1 = require("./login");
+var register_1 = require("./register");
+var event_Planning_1 = require("./event-Planning");
+var statistics_1 = require("./statistics"); // Import StatisticsPage
+var Router;
+(function (Route) {
+    Route["LOGIN"] = "login";
+    Route["REGISTER"] = "register";
+    Route["EVENT_PLANNING"] = "event-planning";
+    Route["STATISTICS"] = "statistics";
+    // Add more routes as needed
+})(Router || (Router = {}));
+var Route = /** @class */ (function () {
+    function Router() {
+        this.currentPage = null;
     }
-    core.Router = Router;
-})(core || (core = {}));
-let router = new core.Router();
-router.AddTable([
-    "/",
-    "/home",
-    "/about",
-    "/services",
-    "/products",
-    "/contact",
-    "/contact-list",
-    "/login",
-    "/register",
-    "/edit"
-]);
-let route = location.pathname;
-router.ActiveLink = (router.Find(route) > -1)
-    ? ((route) === "/") ? "home" : route.substring(1)
-    : ("404");
+    // Method to navigate to a specific route
+    Router.prototype.navigateTo = function (route) {
+        switch (route) {
+            case Route.LOGIN:
+                this.currentPage = new login_1.LoginPage();
+                login_1.LoginPage.render(); // Render login page
+                break;
+            case Route.REGISTER:
+                this.currentPage = new register_1.RegisterPage();
+                register_1.RegisterPage.render(); // Render register page
+                break;
+            case Route.EVENT_PLANNING:
+                this.currentPage = new event_Planning_1.EventPlanningPage();
+                event_Planning_1.EventPlanningPage.render(); // Render event planning page
+                break;
+            case Route.STATISTICS: // Handle statistics route
+                this.currentPage = new statistics_1.StatisticsPage();
+                statistics_1.StatisticsPage.render(); // Render statistics page
+                break;
+            // Add more cases for additional routes
+            default:
+                console.error('Invalid route:', route);
+        }
+    };
+    // Method to handle routing based on URL hash
+    Router.prototype.handleRouting = function () {
+        var hash = window.location.hash.slice(1);
+        switch (hash) {
+            case Route.LOGIN:
+            case Route.REGISTER:
+            case Route.EVENT_PLANNING:
+            case Route.STATISTICS: // Handle statistics route
+                this.navigateTo(hash);
+                break;
+            default:
+                // Default route
+                this.navigateTo(Route.LOGIN);
+                break;
+        }
+    };
+    // Method to initialize the router
+    Router.prototype.init = function () {
+        var _this = this;
+        window.addEventListener('hashchange', function () {
+            _this.handleRouting();
+        });
+        this.handleRouting(); // Handle routing when the page loads
+    };
+    return Router;
+}());
+exports.Router = Route;
+// Instantiate and initialize the router
+var router = new Route();
+router.init();
 //# sourceMappingURL=router.js.map
